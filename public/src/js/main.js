@@ -17,14 +17,42 @@ button.addEventListener('click', function (event) {
   }
 });
 
-fetch('https://httpbin.org/ip')
+//5. [Cache then network] Caching strategy
+let url = 'https://httpbin.org/ip';
+let servedFromNetwork = false;
+
+//5.1.0 Fetch url from network
+fetch(url)
   .then(function (res) {
+    //Fetch returns a promise, regardless of sucess or failure
+    //Need not to check
     return res.json();
   })
   .then(function (data) {
-    console.log(data.origin);
+    servedFromNetwork = true
+    console.log('Served from network: ', data.origin);
     box.style.height = (data.origin.substr(0, 2) * 5) + 'px';
   });
+
+//5.1 Fetch url from cache
+if ('caches' in window) {
+  caches.match(url)
+    .then(function (res) {
+      //Match returns a promise resolves to success when succeeded or to undefined when fail
+      //Only continues if the promise resolves to success 
+      if (res) {
+        return res.json();
+      }
+    })
+    .then(function (data) {
+      if (!servedFromNetwork) {
+        console.log('Served from cache: ', data.origin);
+        box.style.height = (data.origin.substr(0, 2) * 5) + 'px';
+      }
+    })
+}
+
+
 
 // 1) Identify the strategy we currently use in the Service Worker (for caching)
 // Caching Strategy: cache with network fallback

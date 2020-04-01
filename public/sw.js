@@ -1,5 +1,5 @@
-var CACHE_STATIC_NAME = 'static-v2';
-var CACHE_DYNAMIC_NAME = 'dynamic-v1';
+var CACHE_STATIC_NAME = 'static-v3';
+var CACHE_DYNAMIC_NAME = 'dynamic-v2';
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
@@ -14,7 +14,7 @@ self.addEventListener('install', function (event) {
         '/src/js/material.min.js',
         'https://fonts.googleapis.com/css?family=Roboto:400,700',
         'https://fonts.googleapis.com/icon?family=Material+Icons',
-        'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css'
+        'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css',
       ]);
     })
   )
@@ -25,13 +25,14 @@ self.addEventListener('activate', function (event) {
     caches.keys()
     .then(function (keyList) {
       return Promise.all(keyList.map(function (key) {
-        if (key !== CACHE_STATIC_NAME) {
+        if (key !== CACHE_STATIC_NAME && key !== CACHE_DYNAMIC_NAME) {
           return caches.delete(key);
         }
       }));
     })
   );
 });
+
 
 //1. [cache with network fallback] Caching strategy
 // self.addEventListener('fetch', function (event) {
@@ -103,3 +104,25 @@ self.addEventListener('activate', function (event) {
 //   )
 // })
 
+//5. [Cache then network] Caching strategy
+
+self.addEventListener('fetch',
+  function (event) {
+    //[Cache then network for url requested from main.js]
+    let url = 'https://httpbin.org/ip';
+    if (event.request.url.indexOf(url) > -1) {
+      event.respondWith(
+        fetch(event.request.url)
+        .then(function (response) {
+          if (response) {
+            //Update cached url and its response
+            return caches.open(CACHE_DYNAMIC_NAME)
+              .then(function (cache) {
+                cache.put(event.request.url, response.clone());
+                return response;
+              })
+          }
+        })
+      )
+    }
+  })
