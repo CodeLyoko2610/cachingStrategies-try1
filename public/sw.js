@@ -1,5 +1,5 @@
-let CACHE_STATIC_NAME = 'static-v3';
-let CACHE_DYNAMIC_NAME = 'dynamic-v2';
+let CACHE_STATIC_NAME = 'static-v4';
+let CACHE_DYNAMIC_NAME = 'dynamic-v3';
 let STATIC_ASSET_FILES = [
   '/',
   '/index.html',
@@ -67,13 +67,10 @@ self.addEventListener('activate', function (event) {
 // })
 
 //3. [Cache-only] Caching strategy
-//Pages cached before can work without network, others cannot
+//Pages cached before can work with or without network, others cannot REGARDLESS of network status
 // self.addEventListener('fetch', function (event) {
 //   event.respondWith(
 //     caches.match(event.request.url)
-//     .then(function (response) {
-//       return response;
-//     })
 //   )
 // })
 
@@ -104,6 +101,15 @@ self.addEventListener('activate', function (event) {
 //   )
 // })
 
+//Helper function for cache-only strategy
+function isInArray(string, array) {
+  for (let i = 0; i < array.length; i++) {
+    if (string === array[i]) return true;
+  }
+  //If no hit after the loop ends, return false
+  return false;
+}
+
 //5. [Cache then network] Caching strategy
 //Good with dynamic - recently changing content
 //Not working offline, because no intention to load from cache
@@ -113,30 +119,43 @@ self.addEventListener('fetch', function (event) {
   if (event.request.url.indexOf(url) > -1) {
     event.respondWith(
       //Update cached url and its response
-      caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
-        return fetch(event.request.url).then(function (response) {
-          cache.put(event.request.url, response.clone());
-          return response;
-        });
+      caches.open(CACHE_DYNAMIC_NAME)
+      .then(function (cache) {
+        return fetch(event.request.url)
+          .then(function (response) {
+            cache.put(event.request.url, response.clone());
+            return response;
+          });
       })
     );
-  } else if (STATIC_ASSET_FILES.includes(event.request.url)) {
+  }
+  //Solution 1:
+  //else if (STATIC_ASSET_FILES.includes(event.request.url)) {
+  //Solution 2:
+  else if (isInArray(event.request.url, STATIC_ASSET_FILES)) {
     //[cache-only] For the app shell
-    event.respondWith(caches.match(event.request.url));
+    event.respondWith(
+      caches.match(event.request.url));
   } else {
     //[cache with network fallback] For all other urls
     //Redirect problem when using Chromium: url /dynamic cannot load, but /dynamic/ loads normally
     event.respondWith(
-      caches.match(event.request.url).then(function (response) {
+      caches.match(event.request)
+      .then(function (response) {
         if (response) {
           return response;
         } else {
-          return fetch(event.request.url).then(function (res) {
-            return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
-              cache.put(event.request.url, res.clone());
-              return res;
-            });
-          });
+          return fetch(event.request)
+            .then(function (res) {
+              return caches.open(CACHE_DYNAMIC_NAME)
+                .then(function (cache) {
+                  cache.put(event.request.url, res.clone());
+                  return res;
+                });
+            })
+            .catch(function (err) {
+
+            })
         }
       })
     );
