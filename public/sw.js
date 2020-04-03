@@ -138,9 +138,10 @@ self.addEventListener('fetch', function (event) {
       caches.match(event.request.url));
   } else {
     //[cache with network fallback] For all other urls
-    //Redirect problem when using Chromium: url /dynamic cannot load, but /dynamic/ loads normally
+    //[Fixed] Redirect problem when using Chromium: url /dynamic cannot load, but /dynamic/ loads normally
+    //Solution: for fetch(), passed in a Request object, instead of a url
     event.respondWith(
-      caches.match(event.request)
+      caches.match(event.request.url)
       .then(function (response) {
         if (response) {
           return response;
