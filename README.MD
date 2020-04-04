@@ -12,4 +12,22 @@ Once Node.js is installed, open your command prompt or terminal and **navigate i
 
 Finally, run `npm start` to start the development server and visit [localhost:8080](http://localhost:8080) to see the running application.
 
-Switching to different stratergies can be done at `/public/sw.js`. More detailed instructions and expetected outputs are in the mentioned files.
+Different strategies have been commentted out. Switching to different stratergies can be done at `/public/sw.js` and `pulic/js/main.js`.
+
+# Note
+
+Please clear the Cache Storage prior to switching among strategies to ensure the application working correctly.
+
+This project covers:
+
+- Cache, then network strategy
+
+- Cache with network fallback strategy
+
+- Network with cache fallback strategy
+
+- Cache-only strategy
+
+- Network-only strategy
+
+More detailed instructions and expetected outputs are in the mentioned files.
